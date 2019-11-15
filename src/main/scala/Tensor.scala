@@ -55,16 +55,15 @@ object Tensor extends Serializable {
       .withColumn("tick", row_number().over(w))
       .withColumn("time_prev", lag("time", 1, minTime).over(w))
       .withColumn("time_delta_ns", (col("time") - col("time_prev")))
-      //.withColumn("time_elapsed_seconds", sum("time_delta_seconds").over(w))
       .withColumn("time_elapsed_ns", (col("time") - minTime))
       .withColumn("time_elapsed_ns_prev", lag("time_elapsed_ns", 1).over(w))
       .withColumn("time_elapsed_ns_post", lead("time_elapsed_ns", 1).over(w))
       .withColumn("tick_post", lead("tick", 1).over(w))
       .withColumn("status", tensor.resetSum($"tick", $"tick_post", $"time_elapsed_ns", $"time_elapsed_ns_prev", $"time_elapsed_ns_post"))
-      //.withColumn("hls", (lit(hls)))
       .withColumn("half_life", explode(lit(hls)))
       .withColumn("result", calculateDecayedSum2($"time_delta_ns", $"bid_volumes", $"ask_volumes", $"half_life", $"status").over(w_res))
-      .select($"time", $"tick", $"half_life", $"bid_volumes", $"ask_volumes", $"time_elapsed_ns", $"result.bid_decayed_sums", $"result.ask_decayed_sums", $"status")
+      .select($"time", $"tick", $"half_life", $"bid_volumes", $"ask_volumes", $"time_elapsed_ns",
+              $"result.bid_decayed_sums", $"result.ask_decayed_sums", $"status")
       .filter($"status".contains("report"))
       .orderBy($"time", $"half_life")
 
