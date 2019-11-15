@@ -4,9 +4,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object IO {
-
-      case class Record(time: Long, bid_volumes: List[Long], ask_volumes: List[Long])
-
+  
   def jsonToDataFrame(spark: SparkSession, path: String): DataFrame = {
     @transient lazy val logger = Logger.getLogger(getClass.getName)
     logger.info("Reading JSON File..")
