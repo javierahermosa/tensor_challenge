@@ -48,7 +48,7 @@ object Tensor extends Serializable {
     val w = Window.orderBy("time")
     val w_res = Window.partitionBy("half_life").orderBy("time")
 
-    val calculateDecayedSum2 = new CalculateDecayedSum
+    val decayedSum = new CalculateDecayedSum
     val tensor = new Tensor(resetTicks, resetTimes)
 
     val results = data
@@ -61,7 +61,7 @@ object Tensor extends Serializable {
       .withColumn("tick_post", lead("tick", 1).over(w))
       .withColumn("status", tensor.resetSum($"tick", $"tick_post", $"time_elapsed_ns", $"time_elapsed_ns_prev", $"time_elapsed_ns_post"))
       .withColumn("half_life", explode(lit(hls)))
-      .withColumn("result", calculateDecayedSum2($"time_delta_ns", $"bid_volumes", $"ask_volumes", $"half_life", $"status").over(w_res))
+      .withColumn("result", decayedSum($"time_delta_ns", $"bid_volumes", $"ask_volumes", $"half_life", $"status").over(w_res))
       .select($"time", $"tick", $"half_life", $"bid_volumes", $"ask_volumes", $"time_elapsed_ns",
               $"result.bid_decayed_sums", $"result.ask_decayed_sums", $"status")
       .filter($"status".contains("report"))
