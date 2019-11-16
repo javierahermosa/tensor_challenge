@@ -1,10 +1,12 @@
+package org.tensor.challenge
+
 import org.apache.log4j.Logger
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions._
+import org.apache.spark.sql.functions.{desc, rank, size}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object IO {
-  
+
   def jsonToDataFrame(spark: SparkSession, path: String): DataFrame = {
     @transient lazy val logger = Logger.getLogger(getClass.getName)
     logger.info("Reading JSON File..")

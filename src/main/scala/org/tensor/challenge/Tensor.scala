@@ -1,7 +1,10 @@
+package org.tensor.challenge
+
+
 import org.apache.log4j.Logger
-import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.expressions.{UserDefinedFunction, Window}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.{Row, SparkSession}
 
 class Tensor(resetTicks: List[Int], resetTimes: List[Double]) extends Serializable {
   @transient lazy val logger: Logger = Logger.getLogger(getClass.getName)
@@ -11,16 +14,18 @@ class Tensor(resetTicks: List[Int], resetTimes: List[Double]) extends Serializab
     logger.info("Hello " + arg)
   }
 
-  def resetSum: UserDefinedFunction = udf(
-    (tick: Long, tick_post: Long, dt: Double, dt_prev: Double, dt_post: Double) => {
-    (tick, dt, tick_post) match {
-      case (x, _, _) if resetTicks.contains(x) => "reset_tick"
-      case (_, y, _) if resetTimes.exists(rt => (y >= rt) && (dt_prev < rt)) => "reset_time"
-      case (_, _, z) if resetTicks.contains(z) => "report_tick_reset"
-      case (_, y, _) if resetTimes.exists(rt => (y < rt) && (dt_post > rt)) => "report_time_reset"
-      case (x, _, _) if x == 1.0 => ""
-      case (_,_, _) => ""
-    }
+  def resetSumUDF: UserDefinedFunction = udf(
+    (tick: Long, time: Double, time_prev: Double, time_post: Double) => {
+
+      val tick_post = tick + 1L
+      (tick, time, tick_post) match {
+        case (x, _, _) if resetTicks.contains(x) => "reset_tick"
+        case (_, y, _) if resetTimes.exists(rt => (y >= rt) && (time_prev < rt)) => "reset_time"
+        case (_, _, z) if resetTicks.contains(z) => "report_tick_reset"
+        case (_, y, _) if resetTimes.exists(rt => (y < rt) && (time_post > rt)) => "report_time_reset"
+        //case (x, _, _) if x == 1.0 => ""
+        case (_,_, _) => ""
+      }
   })
 }
 
@@ -31,9 +36,8 @@ object Tensor extends Serializable {
     val spark = SparkSession
       .builder
       .master("local")
-      .appName("Simple Application")
+      .appName("tensor_challenge")
       .getOrCreate()
-    val sc = spark.sparkContext
 
     val path = "src/main/resources/challenge.json"
     val data = IO.jsonToDataFrame(spark, path)
@@ -58,8 +62,7 @@ object Tensor extends Serializable {
       .withColumn("time_elapsed_ns", (col("time") - minTime))
       .withColumn("time_elapsed_ns_prev", lag("time_elapsed_ns", 1).over(w))
       .withColumn("time_elapsed_ns_post", lead("time_elapsed_ns", 1).over(w))
-      .withColumn("tick_post", lead("tick", 1).over(w))
-      .withColumn("status", tensor.resetSum($"tick", $"tick_post", $"time_elapsed_ns", $"time_elapsed_ns_prev", $"time_elapsed_ns_post"))
+      .withColumn("status", tensor.resetSumUDF($"tick", $"time_elapsed_ns", $"time_elapsed_ns_prev", $"time_elapsed_ns_post"))
       .withColumn("half_life", explode(lit(hls)))
       .withColumn("result", decayedSum($"time_delta_ns", $"bid_volumes", $"ask_volumes", $"half_life", $"status").over(w_res))
       .select($"time", $"tick", $"half_life", $"bid_volumes", $"ask_volumes", $"time_elapsed_ns",
@@ -68,6 +71,6 @@ object Tensor extends Serializable {
       .orderBy($"time", $"half_life")
 
     results.show(100, false)
-    sc.stop()
+    spark.stop()
   }
 }

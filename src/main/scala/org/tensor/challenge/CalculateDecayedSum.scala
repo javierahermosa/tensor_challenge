@@ -1,7 +1,8 @@
+package org.tensor.challenge
+
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types._
-
 
 class CalculateDecayedSum extends UserDefinedAggregateFunction{
 
@@ -28,7 +29,7 @@ class CalculateDecayedSum extends UserDefinedAggregateFunction{
   // Whether this UDAF is deterministic or not. In this case, it is
   override def deterministic: Boolean = true
 
-  // Initial values for the temporary values declared above
+  // Initial values for the temporary values declared in buffer schema
   override def initialize(buffer: MutableAggregationBuffer): Unit = {
     buffer(0) = Seq(0.0, 0.0, 0.0, 0.0, 0.0)
     buffer(1) = Seq(0.0, 0.0, 0.0, 0.0, 0.0)
@@ -59,7 +60,6 @@ class CalculateDecayedSum extends UserDefinedAggregateFunction{
 
     buffer(0) = decayedSum(etds_bid_prev, timeDelta, bid_volumes, hl, status)
     buffer(1) = decayedSum(etds_ask_prev, timeDelta, ask_volumes, hl, status)
-
   }
 
   // Function used to merge two objects. In this case, it is not necessary to define this method since
@@ -70,5 +70,4 @@ class CalculateDecayedSum extends UserDefinedAggregateFunction{
   override def evaluate(buffer: Row): Any = {
     (buffer.getList(0), buffer.getList(1))
   }
-
 }

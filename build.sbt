@@ -5,6 +5,7 @@ version := "0.1"
 scalaVersion := "2.11.12"
 
 //libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.4"
+resolvers += "jitpack" at "https://jitpack.io"
 
 libraryDependencies ++= Seq(
   // spark core
@@ -23,6 +24,7 @@ libraryDependencies ++= Seq(
   // testing
   "org.scalatest"   %% "scalatest"    % "3.0.8"   % "test",
   "org.scalacheck"  %% "scalacheck"   % "1.12.2"  % "test",
+  "com.github.mrpowers" % "spark-fast-tests" % "v0.16.0" % "test",
 
   // logging
   "org.apache.logging.log4j" % "log4j-api" % "2.4.1",
