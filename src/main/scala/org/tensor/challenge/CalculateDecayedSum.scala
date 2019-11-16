@@ -62,8 +62,7 @@ class CalculateDecayedSum extends UserDefinedAggregateFunction{
     buffer(1) = decayedSum(etds_ask_prev, timeDelta, ask_volumes, hl, status)
   }
 
-  // Function used to merge two objects. In this case, it is not necessary to define this method since
-  // the whole logic has been implemented in update
+  // Function used to merge two objects. Not needed in this case, all is done in update.
   override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = {}
 
   // Function returns this

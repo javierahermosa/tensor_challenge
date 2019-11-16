@@ -51,12 +51,22 @@ In order to run the program, use the Java 1.8 SDK, clone the repository,
 place the challenge.json file on the resources folder and run the 
 class org.tensor.challenge.Tensor.
 
-## Tests
-
 To run tests  on the main functions of the program, sun the class TensorTest
 
-## Optimizations 
+## Performance 
 
+In developing the code, it was important for me to avoid performing 
+too many aggregation operations, e.g. running a window function 
+on volume columns one at the time. Using a custom aggregation function 
+allowed me to compute all decayed sums over one iteration. I did use 
+a couple of additional window functions to determine the times 
+I which I had to report or reset the sum. 
+
+The data is also small enough to fit in memory, so I persisted input 
+DataFrame upon reading it. In a more scalable version usign e.g. streaming, 
+this may not be necessary if the chunks are small enough. 
+
+In my machine, the code takes 18.2 seconds to run using four threads.
 
 
 

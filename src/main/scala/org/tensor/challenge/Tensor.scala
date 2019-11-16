@@ -22,6 +22,8 @@ class Tensor(resetTicks: List[Int], resetTimes: List[Double]) extends Serializab
 }
 
 object Tensor extends Serializable {
+
+  val startTime: Long = System.nanoTime
   @transient lazy val logger: Logger = Logger.getLogger(getClass.getName)
 
   def main(args: Array[String]): Unit = {
@@ -37,7 +39,6 @@ object Tensor extends Serializable {
     val hls = Array(1e6, 1e9, 1e12)
     val resetTicks = List(1000, 1000000)
     val resetTimes = List(1, 60, 3600).map(_ * 1e9) // seconds to ns
-
 
     import spark.implicits._
     val decayedSum = new CalculateDecayedSum
@@ -60,9 +61,11 @@ object Tensor extends Serializable {
       .select($"time", $"tick", $"half_life", $"bid_volumes", $"ask_volumes", $"time_elapsed_ns",
               $"result.bid_decayed_sums", $"result.ask_decayed_sums", $"status")
       .filter($"status".contains("report"))
-      .orderBy($"time", $"half_life")
 
-    results.show(100, false)
+    results.show(10, false)
+
+    val endTime = (System.nanoTime - startTime)/1e9
+    logger.info("Code ran in %1.5f seconds.".format(endTime))
 
     spark.stop()
   }

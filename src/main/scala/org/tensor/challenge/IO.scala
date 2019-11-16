@@ -24,6 +24,6 @@ object IO {
         .select($"time", $"Bid.volume".as("bid_volumes"), $"Ask.volume".as("ask_volumes"))
         .dropDuplicates("time")
         .filter($"bid_volumes".isNotNull && $"ask_volumes".isNotNull)
-    dataDF
+    dataDF.persist()
   }
 }
