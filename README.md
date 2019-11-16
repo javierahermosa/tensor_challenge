@@ -1,4 +1,4 @@
-# org.tensor.challenge.Tensor Challenge
+# Tensor Challenge
 
 The challenge consisted of computing the decayed sum at given triples of
 half-lifes = {1e6, 1e9, 1e12}, reset times = {60s, 1 min, 1 hour}, and 
