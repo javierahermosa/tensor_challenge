@@ -8,7 +8,7 @@ trait SparkSessionTestWrapper {
     SparkSession
       .builder()
       .master("local")
-      .appName("spark test example")
+      .appName("spark tests")
       .getOrCreate()
   }
 

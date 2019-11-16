@@ -1,6 +1,5 @@
 package org.tensor.challenge
 
-
 import org.apache.log4j.Logger
 import org.apache.spark.sql.expressions.{UserDefinedFunction, Window}
 import org.apache.spark.sql.functions._
@@ -9,21 +8,14 @@ import org.apache.spark.sql.{Row, SparkSession}
 class Tensor(resetTicks: List[Int], resetTimes: List[Double]) extends Serializable {
   @transient lazy val logger: Logger = Logger.getLogger(getClass.getName)
 
-  def say_hello(arg: String): Unit = {
-    logger.info("Hello World!")
-    logger.info("Hello " + arg)
-  }
-
   def resetSumUDF: UserDefinedFunction = udf(
     (tick: Long, time: Double, time_prev: Double, time_post: Double) => {
-
       val tick_post = tick + 1L
       (tick, time, tick_post) match {
         case (x, _, _) if resetTicks.contains(x) => "reset_tick"
         case (_, y, _) if resetTimes.exists(rt => (y >= rt) && (time_prev < rt)) => "reset_time"
         case (_, _, z) if resetTicks.contains(z) => "report_tick_reset"
         case (_, y, _) if resetTimes.exists(rt => (y < rt) && (time_post > rt)) => "report_time_reset"
-        //case (x, _, _) if x == 1.0 => ""
         case (_,_, _) => ""
       }
   })
@@ -35,7 +27,7 @@ object Tensor extends Serializable {
   def main(args: Array[String]): Unit = {
     val spark = SparkSession
       .builder
-      .master("local")
+      .master("local[4]")
       .appName("tensor_challenge")
       .getOrCreate()
 
@@ -46,14 +38,14 @@ object Tensor extends Serializable {
     val resetTicks = List(1000, 1000000)
     val resetTimes = List(1, 60, 3600).map(_ * 1e9) // seconds to ns
 
-    val Row(minTime: Long) = data.agg(min("time")).head
 
     import spark.implicits._
-    val w = Window.orderBy("time")
-    val w_res = Window.partitionBy("half_life").orderBy("time")
-
     val decayedSum = new CalculateDecayedSum
     val tensor = new Tensor(resetTicks, resetTimes)
+
+    val Row(minTime: Long) = data.agg(min("time")).head
+    val w = Window.orderBy("time")
+    val w_res = Window.partitionBy("half_life").orderBy("time")
 
     val results = data
       .withColumn("tick", row_number().over(w))
@@ -71,6 +63,7 @@ object Tensor extends Serializable {
       .orderBy($"time", $"half_life")
 
     results.show(100, false)
+
     spark.stop()
   }
 }

@@ -15,6 +15,8 @@ object IO {
     val timeFilterWindow = Window.partitionBy("time").orderBy(desc("record_size"))
 
     val df = spark.read.json(path)
+
+    // Clean up data to keep most complete record per timestamp
     val dataDF = df
         .withColumn("record_size", size($"Bid.volume") + size($"Ask.volume"))
         .withColumn("completeness_rank", rank().over(timeFilterWindow))

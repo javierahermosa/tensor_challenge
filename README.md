@@ -53,8 +53,11 @@ class org.tensor.challenge.Tensor.
 
 ## Tests
 
+To run tests  on the main functions of the program, sun the class TensorTest
 
 ## Optimizations 
+
+
 
 
 
